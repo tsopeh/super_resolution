@@ -32,12 +32,17 @@ const App = () => {
   useEffect(() => {
     fetchData()
       .then((result) => setData(result))
-      .catch(console.error)
+      .catch((error) => {
+        console.error(error)
+        setData('An error has occurred.')
+      })
   }, [])
 
   return (
     <div className="App">
-      {data}
+      <div>
+        {data}
+      </div>
       <SelectFile onFileSelected={(file) => {
         setFile(file)
       }}></SelectFile>
@@ -53,8 +58,9 @@ const App = () => {
 }
 
 const fetchData = async () => {
-  return fetch(`http://localhost:5100`)
-    .then((res) => res.json())
+  return axios
+    .request<string>({url: 'http://localhost:5100'})
+    .then(res => res.data)
 }
 
 export default App
