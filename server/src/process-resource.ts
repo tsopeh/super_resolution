@@ -1,6 +1,6 @@
 import { spawn } from 'child_process'
 
-export const processVideo = (videoPath: string): Promise<void> => {
+export const processResource = (resourceFilepath: string): Promise<void> => {
 
   return new Promise((resolve, reject) => {
 
@@ -8,7 +8,7 @@ export const processVideo = (videoPath: string): Promise<void> => {
       'bash',
       [
         './src/scripts/realesrgan-ncnn-vulkan-20220424-ubuntu/script.sh',
-        `${videoPath}`,
+        `${resourceFilepath}`,
       ],
     )
 

@@ -4,10 +4,20 @@ import express from 'express'
 import * as fs from 'fs'
 import md5 from 'md5'
 import * as path from 'path'
-import { processVideo } from './process-video'
+import { processResource } from './process-resource'
 
 
-const processed = new Map<string, string>()
+interface ResourceStatus {
+  isFinished: boolean
+  hasError: boolean
+  directoryPath: string
+}
+
+/**
+ * Key — resource id
+ * Value — resource path
+ */
+const processed = new Map<string, ResourceStatus>()
 
 // region Express setup
 const app = express()
@@ -28,11 +38,11 @@ const publicPath = path.join(process.cwd(), 'public')
 
 // endregion Environment setup
 
-app.route('/').get((req, res) => {
-  res.send('Hello world!')
+app.route('/ping').get((req, res) => {
+  res.send('pong')
 })
 
-app.route('/upload_video').post((req, res) => {
+app.route('/upload').post((req, res) => {
   req.pipe(req.busboy)
 
   req.busboy.on('file', (name, stream, info) => {
@@ -51,8 +61,14 @@ app.route('/upload_video').post((req, res) => {
     writeStream.on('close', () => {
       console.log(`Upload finished for: "${fileName}".`)
       const hash = md5(fileName)
-      processed.set(hash, filePath)
-      processVideo(filePath)
+      processed.set(hash, {directoryPath: filePath, isFinished: false, hasError: false})
+      processResource(filePath)
+        .then(() => {
+          processed.set(hash, {directoryPath: filePath, isFinished: true, hasError: false})
+        })
+        .catch(() => {
+          processed.set(hash, {directoryPath: filePath, isFinished: false, hasError: true})
+        })
       res.send(hash)
     })
 

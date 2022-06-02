@@ -1,13 +1,31 @@
+@use 'utils';
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
 }
 
 body {
+  @include utils.vertical();
   min-height: 100vh;
   font-family: 'sans-serif';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  background: radial-gradient(circle, transparent 20%, slategray 20%, slategray 80%, transparent 80%, transparent),
+  radial-gradient(circle, transparent 20%, slategray 20%, slategray 80%, transparent 80%, transparent) 50px 50px,
+  linear-gradient(#A8B1BB 8px, transparent 8px) 0 -4px,
+  linear-gradient(90deg, #A8B1BB 8px, transparent 8px) -4px 0;
+  background-color: slategray;
+  background-size: 100px 100px, 100px 100px, 50px 50px, 50px 50px;
+
+  #root {
+    flex: 1 0 auto;
+    @include utils.vertical();
+    align-items: center;
+  }
 }
 

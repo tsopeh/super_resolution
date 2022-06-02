@@ -3,24 +3,17 @@ import './SelectFile.scss'
 
 
 export interface UploadFileProps {
-  onFileSelected?: (file: File) => void
+  onFileSelected?: (file: FileList) => void
   onError?: (reason: string) => void
   labelName?: string
 }
 
 export const SelectFile: React.FC<UploadFileProps> = (props: UploadFileProps) => {
 
-  const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
   const [dragActive, setDragActive] = React.useState<boolean>(false)
 
-  const handleFileChange = (file: File | undefined): void => {
-    if (file instanceof File) {
-      setSelectedFile(file)
-      props.onFileSelected?.(file)
-    } else {
-      setSelectedFile(null)
-      props.onError?.('Error occurred while selecting a file.')
-    }
+  const handleFileChange = (files: FileList): void => {
+    props.onFileSelected?.(files)
   }
 
   const labelName = props.labelName ?? 'select-file'
@@ -30,11 +23,15 @@ export const SelectFile: React.FC<UploadFileProps> = (props: UploadFileProps) =>
   >
     <input
       type="file"
+      multiple
+      value={undefined}
       id={labelName}
       name={labelName}
       onChange={(event) => {
         event.preventDefault()
-        handleFileChange(event.target.files?.[0])
+        if (event.target.files != null) {
+          handleFileChange(event.target.files)
+        }
       }}
     />
     <label
@@ -59,14 +56,10 @@ export const SelectFile: React.FC<UploadFileProps> = (props: UploadFileProps) =>
         e.preventDefault()
         e.stopPropagation()
         setDragActive(false)
-        handleFileChange(e.dataTransfer.files[0])
+        handleFileChange(e.dataTransfer.files)
       }}
     >
-      <span>{
-        selectedFile == null
-          ? 'Drag and drop a file here or click here to select it from your device.'
-          : selectedFile.name
-      }</span>
+      <span>Drag and drop a file here or click here to select it from your device.</span>
     </label>
   </form>
 }

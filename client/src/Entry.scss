@@ -1,0 +1,34 @@
+@use "utils";
+
+.entry {
+  @include utils.horizontal();
+  height: 5rem;
+  justify-content: space-between;
+  align-items: stretch;
+  border: 1px solid #6495ed;
+
+  .file-name {
+    flex: 1 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 15rem;
+  }
+
+  .content {
+    flex: 1 1 auto;
+    @include utils.horizontal();
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .remove {
+    align-self: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 2rem;
+    height: 2rem;
+  }
+
+}

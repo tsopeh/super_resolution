@@ -1,0 +1,19 @@
+@mixin horizontal($gap: 1rem) {
+  display: flex;
+  flex-direction: row;
+
+  // Read more about this pattern here: https://alistapart.com/article/axiomatic-css-and-lobotomized-owls/
+  > * + * {
+    margin-left: $gap;
+  }
+}
+
+@mixin vertical($gap: 1rem) {
+  display: flex;
+  flex-direction: column;
+
+  // Read more about this pattern here: https://alistapart.com/article/axiomatic-css-and-lobotomized-owls/
+  > * + * {
+    margin-top: $gap;
+  }
+}
