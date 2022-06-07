@@ -1,6 +1,6 @@
 import { spawn } from 'child_process'
 
-export const processResource = (resourceFilepath: string): Promise<void> => {
+export const processResource = (resourceSrcPath: string): Promise<string> => {
 
   return new Promise((resolve, reject) => {
 
@@ -8,18 +8,25 @@ export const processResource = (resourceFilepath: string): Promise<void> => {
       'bash',
       [
         './src/scripts/realesrgan-ncnn-vulkan-20220424-ubuntu/script.sh',
-        `${resourceFilepath}`,
+        `${resourceSrcPath}`,
       ],
     )
 
+    let resultFilePath: string | null = null
     command.stdout.on('data', (data) => {
-      console.log('STDOUT:')
-      console.log(data.toString())
+      const stringified = data.toString()
+      console.log('STDOUT:', stringified)
+      resultFilePath = stringified
     })
 
     command.stdout.on('close', (exitCode: unknown) => {
-      console.log('Command finished with an exit code: ', exitCode)
-      resolve()
+      if (resultFilePath != null) {
+        // Seems that `resultFilePath` has '\n' at the end, se use `trim()` to
+        // remove it.
+        resolve(resultFilePath.trim())
+      } else {
+        reject()
+      }
     })
 
     command.stderr.on('data', (error) => {

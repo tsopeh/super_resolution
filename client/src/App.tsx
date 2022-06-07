@@ -3,37 +3,76 @@ import React, { useEffect, useState } from 'react'
 import './App.scss'
 import { ContentType, Entry, EntryModel } from './Entry'
 import './Entry.scss'
+import { getPersistedResourceInfo, persistResourceInfo } from './persistent-info'
 import { SelectFile } from './SelectFile'
+import { checkStatus, ResourceStatusOutput, resourceStatusOutputToEntryModel } from './status'
 import { NNModels, UpsampleOptionsModel } from './UpsampleOptions'
 
 const UPLOAD_URL = 'http://localhost:5100/upload'
 
+// TODO: Remove this once the `localStorage` handling gets stable.
+// localStorage.clear()
+
 const App = () => {
 
-  const [entries, setEntries] = useState<ReadonlyArray<EntryModel>>([])
+  const [tmpEntries, setTmpEntries] = useState<ReadonlyArray<EntryModel>>([])
+  const [persistedEntries, setPersistedEntries] = useState<ReadonlyArray<EntryModel>>([])
 
   useEffect(() => {
-    fetchData()
-      .then((result) => console.log(result))
-      .catch((error) => {
-        console.error(error)
-        console.error('An error has occurred.')
-      })
+    const intervalId = setInterval(() => {
+      const persisted = getPersistedResourceInfo()
+      if (persisted.length === 0) {
+        return
+      }
+      checkStatus(persisted.map(info => info.resourceId))
+        .then((result) => {
+          setPersistedEntries(prevState => {
+            const toUpdate = result.filter(res => res != null && prevState.some(existing => existing.resourceId === res?.resourceId)) as ReadonlyArray<ResourceStatusOutput>
+            const toAdd = result.filter(res => res != null && !prevState.some(existing => existing.resourceId === res?.resourceId)) as ReadonlyArray<ResourceStatusOutput>
+            const toRemove = persisted.filter(p => !result.some(r => r?.resourceId === p.resourceId))
+            const nextState: ReadonlyArray<EntryModel> = [
+              ...prevState
+                .filter(existing => !toRemove.some(r => r.resourceId === existing.resourceId))
+                .map((entry): EntryModel => {
+                  const found = toUpdate.find(x => x.resourceId === entry.resourceId)
+                  if (found != null) {
+                    return resourceStatusOutputToEntryModel(entry, found)
+                  } else {
+                    return entry
+                  }
+                }),
+              ...toAdd.map((newOne): EntryModel => {
+                return resourceStatusOutputToEntryModel({
+                  resourceId: newOne.resourceId,
+                  fileName: persisted.find(p => p.resourceId == newOne.resourceId)!.fileName,
+                  content: {
+                    type: ContentType.Uploading,
+                    progress: 0,
+                  },
+                  onRemove: () => {
+                  }, // TODO: Fix remove.
+                }, newOne)
+              }),
+            ]
+            persistResourceInfo(nextState.map(entry => ({resourceId: entry.resourceId, fileName: entry.fileName})))
+            return nextState
+          })
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    }, 2000)
+    return () => clearInterval(intervalId)
   }, [])
 
   return (
     <div className="App">
       <div>Upsample videos</div>
-      {
-        entries.map(({id, content, fileName}) => {
-          return <Entry key={id} content={content} fileName={fileName}></Entry>
-        })
-      }
       <SelectFile onFileSelected={(files) => {
-        setEntries((prevState) => {
+        setTmpEntries((prevState) => {
           const newEntries: ReadonlyArray<EntryModel> =
             Array.from(files).map((file) => ({
-              id: file.name,
+              resourceId: file.name,
               fileName: file.name,
               content: {
                 type: ContentType.UpsampleOptions,
@@ -42,9 +81,9 @@ const App = () => {
                   scale: 2,
                 },
                 updateForm: (newOptions: UpsampleOptionsModel) => {
-                  setEntries((prevState) => {
+                  setTmpEntries((prevState) => {
                     return prevState.map(existing => {
-                      return existing.id !== file.name
+                      return existing.resourceId !== file.name
                         ? existing
                         : {
                           ...existing,
@@ -57,33 +96,37 @@ const App = () => {
                   })
                 },
                 submit: () => {
-                  uploadFileAndStartProcessing(file, setEntries)
+                  uploadFileAndStartProcessing(file, setTmpEntries)
                 },
               },
             }))
           return [...prevState, ...newEntries]
         })
       }}></SelectFile>
+      {
+        [
+          ...persistedEntries.map(({resourceId, content, fileName}) => {
+            return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
+          }),
+          ...tmpEntries.map(({resourceId, content, fileName}) => {
+            return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
+          }),
+        ]
+      }
     </div>
   )
 }
 
-const fetchData = async () => {
-  return axios
-    .request<string>({url: 'http://localhost:5100/ping'})
-    .then(res => res.data)
-}
-
-const uploadFileAndStartProcessing = (file: File, setEntries: React.Dispatch<React.SetStateAction<readonly EntryModel[]>>) => {
+const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<React.SetStateAction<readonly EntryModel[]>>) => {
 
   const formData = new FormData()
   formData.append('name', file.name)
   formData.append('file', file)
 
 
-  setEntries((prevState) => {
+  setTmpEntries((prevState) => {
     return prevState.map(existing => {
-      return existing.id !== file.name
+      return existing.resourceId !== file.name
         ? existing
         : {
           ...existing,
@@ -96,11 +139,11 @@ const uploadFileAndStartProcessing = (file: File, setEntries: React.Dispatch<Rea
   })
 
   axios
-    .post(UPLOAD_URL, formData, {
+    .post<string>(UPLOAD_URL, formData, {
       onUploadProgress: ({loaded, total}) => {
-        setEntries((prevState) => {
+        setTmpEntries((prevState) => {
           return prevState.map(entry => {
-            return entry.id !== file.name
+            return entry.resourceId !== file.name
               ? entry
               : {
                 ...entry,
@@ -114,15 +157,14 @@ const uploadFileAndStartProcessing = (file: File, setEntries: React.Dispatch<Rea
       },
     })
     .then((res) => {
-      const resourceId = res.data.id
-      // TODO: Save to local-storage.
-      setEntries((prevState) => {
+      const resourceId = res.data
+      setTmpEntries((prevState) => {
         return prevState.map(entry => {
-          return entry.id !== file.name
+          return entry.resourceId !== file.name
             ? entry
             : {
               ...entry,
-              id: resourceId,
+              resourceId: resourceId,
               content: {
                 ...entry.content,
                 progress: 1,
@@ -131,9 +173,9 @@ const uploadFileAndStartProcessing = (file: File, setEntries: React.Dispatch<Rea
             }
         })
       })
+      persistResourceInfo([...getPersistedResourceInfo(), {resourceId, fileName: file.name}])
     })
     .catch((err) => console.error('File Upload Error', err))
 }
-
 
 export default App

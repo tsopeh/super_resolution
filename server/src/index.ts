@@ -1,3 +1,4 @@
+import * as bodyParser from 'body-parser'
 import connectBusboy from 'connect-busboy'
 import cors from 'cors'
 import express from 'express'
@@ -5,22 +6,12 @@ import * as fs from 'fs'
 import md5 from 'md5'
 import * as path from 'path'
 import { processResource } from './process-resource'
-
-
-interface ResourceStatus {
-  isFinished: boolean
-  hasError: boolean
-  directoryPath: string
-}
-
-/**
- * Key — resource id
- * Value — resource path
- */
-const processed = new Map<string, ResourceStatus>()
+import { getResourceStatusOutput, infoMap, ResourceStatus, ResourceStatusOutput } from './status'
 
 // region Express setup
 const app = express()
+app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.json())
 app.use(cors())
 app.use(connectBusboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
@@ -38,10 +29,6 @@ const publicPath = path.join(process.cwd(), 'public')
 
 // endregion Environment setup
 
-app.route('/ping').get((req, res) => {
-  res.send('pong')
-})
-
 app.route('/upload').post((req, res) => {
   req.pipe(req.busboy)
 
@@ -50,31 +37,67 @@ app.route('/upload').post((req, res) => {
     console.log(`Upload started for: "${info.filename}".`)
 
     const fileName = info.filename
-    const filePath = path.join(uploadPath, fileName)
-
-    const writeStream = fs.createWriteStream(filePath)
+    const resourceId = `${fileName}_${md5(fileName)}`
+    const workDirPath = path.join(uploadPath, resourceId)
+    const srcDirPath = path.join(workDirPath, 'src')
+    fs.mkdirSync(srcDirPath, {recursive: true})
+    const sourceFilePath = path.join(srcDirPath, fileName)
+    infoMap.set(resourceId, {resourceId, workDirPath, sourceFilePath, status: {type: ResourceStatus.Uploading}})
+    const writeStream = fs.createWriteStream(sourceFilePath)
 
     writeStream.on('error', (err) => {
       console.error(`Error occurred during upload of: "${fileName}".`)
+      infoMap.set(resourceId, {
+        ...infoMap.get(resourceId)!,
+        status: {type: ResourceStatus.UploadingErrored},
+      })
     })
 
     writeStream.on('close', () => {
       console.log(`Upload finished for: "${fileName}".`)
-      const hash = md5(fileName)
-      processed.set(hash, {directoryPath: filePath, isFinished: false, hasError: false})
-      processResource(filePath)
-        .then(() => {
-          processed.set(hash, {directoryPath: filePath, isFinished: true, hasError: false})
+      infoMap.set(resourceId, {
+        ...infoMap.get(resourceId)!,
+        status: {type: ResourceStatus.Processing},
+      })
+      processResource(sourceFilePath)
+        .then((resultFilePath) => {
+          infoMap.set(resourceId, {
+            ...infoMap.get(resourceId)!,
+            status: {type: ResourceStatus.Finished, resultFilePath},
+          })
         })
         .catch(() => {
-          processed.set(hash, {directoryPath: filePath, isFinished: false, hasError: true})
+          infoMap.set(resourceId, {
+            ...infoMap.get(resourceId)!,
+            status: {type: ResourceStatus.ProcessingErrored},
+          })
         })
-      res.send(hash)
+      res.send(resourceId)
     })
 
     stream.pipe(writeStream)
 
   })
+})
+
+app.route('/status').get((req, res) => {
+  const resourceIds = (req.query.resourceIds ?? []) as ReadonlyArray<string>
+  const response: ReadonlyArray<ResourceStatusOutput | null> = resourceIds.map(getResourceStatusOutput)
+  res.send(response)
+})
+
+app.route('/finished/:resourceId').get((req, res) => {
+  const resourceId = req.params.resourceId
+  const status = infoMap.get(resourceId)
+  if (status != null && status.status.type == ResourceStatus.Finished) {
+    res.sendFile(status.status.resultFilePath)
+  } else {
+    res.status(404).send()
+  }
+})
+
+app.route('/ping').get((req, res) => {
+  res.send('pong')
 })
 
 const port = 5100

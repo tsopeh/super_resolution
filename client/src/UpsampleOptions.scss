@@ -1,0 +1,47 @@
+@use "utils";
+
+.upsample-options {
+
+  .model {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.9rem;
+
+    select {
+      margin-top: 0.2rem;
+      height: 2rem;
+    }
+  }
+
+  fieldset {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 1rem;
+    border: none;
+
+    legend {
+      font-size: 0.9rem;
+    }
+
+    .options {
+      @include utils.horizontal();
+
+      label {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        input {
+          margin-right: 0.2rem;
+        }
+      }
+    }
+
+  }
+
+  button {
+    min-width: 8rem;
+    padding: 0.5rem 1rem;
+
+  }
+}

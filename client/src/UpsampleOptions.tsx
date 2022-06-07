@@ -33,52 +33,56 @@ export type UpsampleOptionsProps = {
 
 export const UpsampleOptions: React.FC<UpsampleOptionsProps> = (props: UpsampleOptionsProps) => {
   const {options, updateForm, submit} = props
-  return <form className="content" onSubmit={(event) => event.preventDefault()}>
-    <select
-      value={options.model}
-      onChange={(event) => {
-        const newModel = getDefaultOptionsForModel(event.target.value)
-        updateForm(newModel)
-      }}>
-      {
-        allModels.map(model => {
-          return <option key={modelPronounceableNames[model]} value={model}>{modelPronounceableNames[model]}</option>
-        })
-      }
-    </select>
+  return <div className="content upsample-options">
+    <label className="model">Model
+      <select
+        value={options.model}
+        onChange={(event) => {
+          const newModel = getDefaultOptionsForModel(event.target.value)
+          updateForm(newModel)
+        }}>
+        {
+          allModels.map(model => {
+            return <option key={modelPronounceableNames[model]} value={model}>{modelPronounceableNames[model]}</option>
+          })
+        }
+      </select>
+    </label>
     {
       options.model === NNModels.RealSrAnimeVideoV3
         ? <fieldset>
-          <legend>Up-scaling factor:</legend>
-          {
+          <legend>Upsampling</legend>
+          <div className="options"> {
             ['2', '3', '4'].map(scale => {
-              return <div key={scale}>
-                <input type="radio" id={`${scale}`} name="factor" value={`${scale}`}
-                       checked={options.scale.toString() === scale}
-                       onChange={(event) => {
-                         const newScale = parseInt(event.target.value) as 2 | 3 | 4
-                         updateForm({
-                           ...options,
-                           scale: newScale,
-                         })
-                       }}
+              return <label key={scale}>
+                <input
+                  type="radio"
+                  value={scale}
+                  checked={options.scale.toString() === scale}
+                  onChange={(event) => {
+                    const newScale = parseInt(event.target.value) as 2 | 3 | 4
+                    updateForm({
+                      ...options,
+                      scale: newScale,
+                    })
+                  }}
                 />
-                <label htmlFor={`${scale}`}>{scale}</label>
-              </div>
+                {`×${scale}`}
+              </label>
             })
           }
+          </div>
         </fieldset>
         : null
     }
     {
       <button onClick={() => {
         submit()
-      }
-      }>
+      }}>
         Upscale
       </button>
     }
-  </form>
+  </div>
 }
 
 const getDefaultOptionsForModel = (model: unknown): UpsampleOptionsModel => {

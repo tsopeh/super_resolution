@@ -1,8 +1,6 @@
 @use 'utils';
 
 .content {
-  @include utils.vertical(0.5rem);
-
   .progress {
     height: 1rem;
   }
