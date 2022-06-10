@@ -1,5 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
+import { NNModels, UpsampleOptionsModel } from './process-resource'
 
 /**
  * Key — resource id
@@ -16,18 +17,6 @@ export enum ResourceStatus {
   Finished = 'Finished'
 }
 
-export interface ResourceInfo {
-  resourceId: string
-  workDirPath: string
-  sourceFilePath: string
-  status:
-    | { type: ResourceStatus.Uploading }
-    | { type: ResourceStatus.UploadingErrored }
-    | { type: ResourceStatus.Processing }
-    | { type: ResourceStatus.ProcessingErrored }
-    | { type: ResourceStatus.Finished, resultFilePath: string }
-}
-
 // Keep in sync with the client codebase.
 export interface ResourceStatusOutput {
   resourceId: string
@@ -36,7 +25,20 @@ export interface ResourceStatusOutput {
     | { type: ResourceStatus.UploadingErrored }
     | { type: ResourceStatus.Processing, total: number, done: number }
     | { type: ResourceStatus.ProcessingErrored }
-    | { type: ResourceStatus.Finished, resultUrl: string }
+    | { type: ResourceStatus.Finished, resultUrl: string, model: NNModels, scale: 2 | 3 | 4 }
+}
+
+export interface ResourceInfo {
+  resourceId: string
+  workDirPath: string
+  sourceFilePath: string
+  upsampleOptions: UpsampleOptionsModel
+  status:
+    | { type: ResourceStatus.Uploading }
+    | { type: ResourceStatus.UploadingErrored }
+    | { type: ResourceStatus.Processing }
+    | { type: ResourceStatus.ProcessingErrored }
+    | { type: ResourceStatus.Finished, resultFilePath: string }
 }
 
 export const getResourceStatusOutput = (resourceId: string): ResourceStatusOutput | null => {
@@ -56,7 +58,14 @@ const resourceInfoStatusToResourceStatusOutputStatus = (info: ResourceInfo): Res
     case ResourceStatus.Processing:
       return {type: ResourceStatus.Processing, ...getProgress(info.workDirPath)}
     case ResourceStatus.Finished:
-      return {type: ResourceStatus.Finished, resultUrl: `http://localhost:5100/finished/${info.resourceId}`}
+      return {
+        type: ResourceStatus.Finished,
+        resultUrl: `http://localhost:5100/finished/${info.resourceId}`,
+        model: info.upsampleOptions.model,
+        scale: info.upsampleOptions.model == NNModels.RealSrAnimeVideoV3
+          ? info.upsampleOptions.scale
+          : 4,
+      }
     default:
       return info.status
   }

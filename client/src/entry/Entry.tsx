@@ -30,7 +30,7 @@ export interface EntryModel {
 
 export const Entry: React.FC<Omit<EntryModel, 'resourceId'>> = (props) => {
   return <div className="entry">
-    <div className="file-name"><span>{props.fileName}</span></div>
+    <div className="file-name"><span title={props.fileName}>{props.fileName}</span></div>
     {renderEntryContent(props.content)}
     <BsFillTrashFill className="remove" onClick={() => {
       props.onRemove?.()

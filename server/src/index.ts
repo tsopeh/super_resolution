@@ -5,13 +5,13 @@ import express from 'express'
 import * as fs from 'fs'
 import md5 from 'md5'
 import * as path from 'path'
-import { processResource } from './process-resource'
+import { parseUpsampleOptions, processResource } from './process-resource'
 import { getResourceStatusOutput, infoMap, ResourceStatus, ResourceStatusOutput } from './status'
 
 // region Express setup
 const app = express()
-app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
+app.use(bodyParser.urlencoded())
 app.use(cors())
 app.use(connectBusboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer
@@ -20,11 +20,11 @@ app.use(connectBusboy({
 
 // region Environment setup
 const uploadPath = path.join(process.cwd(), '.tmp')
-const publicPath = path.join(process.cwd(), 'public')
-;[uploadPath, publicPath].forEach(somePath => {
-  if (!fs.existsSync(somePath)) {
-    fs.mkdirSync(somePath)
+;[uploadPath].forEach(somePath => {
+  if (fs.existsSync(somePath)) {
+    fs.rmSync(somePath, {recursive: true})
   }
+  fs.mkdirSync(somePath)
 })
 
 // endregion Environment setup
@@ -36,13 +36,21 @@ app.route('/upload').post((req, res) => {
 
     console.log(`Upload started for: "${info.filename}".`)
 
+    const upsampleOptions = parseUpsampleOptions(req.query)
+
     const fileName = info.filename
-    const resourceId = `${fileName}_${md5(fileName)}`
+    const resourceId = `${fileName}_${upsampleOptions.model}_x${upsampleOptions.scale}_${md5(fileName)}`
     const workDirPath = path.join(uploadPath, resourceId)
     const srcDirPath = path.join(workDirPath, 'src')
     fs.mkdirSync(srcDirPath, {recursive: true})
     const sourceFilePath = path.join(srcDirPath, fileName)
-    infoMap.set(resourceId, {resourceId, workDirPath, sourceFilePath, status: {type: ResourceStatus.Uploading}})
+    infoMap.set(resourceId, {
+      resourceId,
+      workDirPath,
+      sourceFilePath,
+      upsampleOptions,
+      status: {type: ResourceStatus.Uploading},
+    })
     const writeStream = fs.createWriteStream(sourceFilePath)
 
     writeStream.on('error', (err) => {
@@ -59,7 +67,7 @@ app.route('/upload').post((req, res) => {
         ...infoMap.get(resourceId)!,
         status: {type: ResourceStatus.Processing},
       })
-      processResource(sourceFilePath)
+      processResource(infoMap.get(resourceId)!)
         .then((resultFilePath) => {
           infoMap.set(resourceId, {
             ...infoMap.get(resourceId)!,
@@ -78,6 +86,7 @@ app.route('/upload').post((req, res) => {
     stream.pipe(writeStream)
 
   })
+
 })
 
 app.route('/status').get((req, res) => {

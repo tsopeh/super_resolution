@@ -102,8 +102,8 @@ const App = () => {
                     })
                   })
                 },
-                submit: () => {
-                  uploadFileAndStartProcessing(file, setTmpEntries)
+                submit: (options) => {
+                  uploadFileAndStartProcessing(file, options, setTmpEntries)
                 },
               },
               onRemove: () => {
@@ -135,12 +135,20 @@ const App = () => {
   )
 }
 
-const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<React.SetStateAction<readonly EntryModel[]>>) => {
+const uploadFileAndStartProcessing = (
+  file: File,
+  options: UpsampleOptionsModel,
+  setTmpEntries: React.Dispatch<React.SetStateAction<readonly EntryModel[]>>,
+) => {
 
   const formData = new FormData()
   formData.append('name', file.name)
   formData.append('file', file)
 
+  const data = {
+    model: options.model,
+    scale: options.model === NNModels.RealSrAnimeVideoV3 ? options.scale : null,
+  }
 
   setTmpEntries((prevState) => {
     return prevState.map(existing => {
@@ -159,6 +167,7 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
 
   axios
     .post<string>(getUrl('upload'), formData, {
+      params: data,
       onUploadProgress: ({loaded, total}) => {
         setTmpEntries((prevState) => {
           return prevState.map(entry => {

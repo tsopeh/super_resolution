@@ -1,12 +1,20 @@
 import React from 'react'
 import './UpsampleOptions.scss'
 
+// Keep in sync with Server.
 export enum NNModels {
   RealSrAnimeVideoV3 = 'realesr-animevideov3',
   RealSrNetX4Plus = 'realesrnet-x4plus',
   RealSrGanX4Plus = 'realesrgan-x4plus',
   RealSrGanX4PlusAnime = 'realesrgan-x4plus-anime',
 }
+
+// Keep in sync with Server.
+export type UpsampleOptionsModel =
+  | { model: NNModels.RealSrAnimeVideoV3, scale: 2 | 3 | 4 }
+  | { model: NNModels.RealSrNetX4Plus }
+  | { model: NNModels.RealSrGanX4Plus }
+  | { model: NNModels.RealSrGanX4PlusAnime }
 
 const allModels = [NNModels.RealSrAnimeVideoV3, NNModels.RealSrNetX4Plus, NNModels.RealSrGanX4Plus, NNModels.RealSrGanX4PlusAnime]
 
@@ -17,17 +25,11 @@ const modelPronounceableNames = {
   [NNModels.RealSrGanX4PlusAnime]: 'realesrgan-x4plus-anime',
 }
 
-export type UpsampleOptionsModel =
-  | { model: NNModels.RealSrAnimeVideoV3, scale: 2 | 3 | 4 }
-  | { model: NNModels.RealSrNetX4Plus }
-  | { model: NNModels.RealSrGanX4Plus }
-  | { model: NNModels.RealSrGanX4PlusAnime }
-
 
 export type UpsampleOptionsProps = {
   options: UpsampleOptionsModel,
   updateForm: (newOptions: UpsampleOptionsModel) => void
-  submit: () => void
+  submit: (options: UpsampleOptionsModel) => void
 }
 
 
@@ -77,7 +79,7 @@ export const UpsampleOptions: React.FC<UpsampleOptionsProps> = (props: UpsampleO
     }
     {
       <button onClick={() => {
-        submit()
+        submit(options)
       }}>
         Upscale
       </button>
