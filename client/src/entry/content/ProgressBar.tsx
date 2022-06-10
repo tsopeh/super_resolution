@@ -11,9 +11,9 @@ export interface ProgressBarProps {
 }
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({text, progress, color}: ProgressBarProps) => {
-  return <div className="content">
+  return <div className="content progress">
     <div>{text ?? `${progress * 100}%`}</div>
-    <div className="progress" style={{
+    <div className="bar" style={{
       width: `${progress * 100}%`,
       backgroundColor: color ?? '#6495ed',
     }}>

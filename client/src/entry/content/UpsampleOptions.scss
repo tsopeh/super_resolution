@@ -1,6 +1,8 @@
-@use "utils";
+@use "../../utils";
 
 .upsample-options {
+
+  @include utils.horizontal(1rem);
 
   .model {
     display: flex;

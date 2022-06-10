@@ -11,7 +11,7 @@ export const getPersistedResourceInfo = (): ReadonlyArray<PersistedResourceInfo>
     if (Array.isArray(parsed)) {
       return parsed
     } else {
-      throw new Error('Result of parsing must be an array of ids.')
+      throw new Error('Results of parsing must be an array of ids.')
     }
   } catch (err) {
     // console.warn('Failed to read locale-storage.', err)

@@ -44,7 +44,10 @@ export const SelectFile: React.FC<UploadFileProps> = (props: UploadFileProps) =>
         handleFileChange(e.dataTransfer.files)
       }}
     >
-      <span>Drag and drop a file here or click here to select it from your device.</span>
+      <span className="drag-drop">Drag and drop files here
+        <br/>or<br/>
+        <span className="click-here">click here</span> to select it from your device.
+      </span>
       <input
         type="file"
         multiple

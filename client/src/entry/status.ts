@@ -2,7 +2,6 @@ import axios from 'axios'
 import qs from 'qs'
 import { ContentType, EntryModel } from './Entry'
 
-
 // Keep in sync with the Server codebase.
 export enum ResourceStatus {
   Uploading = 'Uploading',

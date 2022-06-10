@@ -14,15 +14,19 @@
     border-radius: 1rem;
     cursor: pointer;
     transition: all 0.5s ease;
+    font-size: 2rem;
 
     &.active {
       background-color: #ffffff;
     }
 
-    span {
-      font-size: 2rem;
+    .drag-drop {
       padding: 2rem;
       text-align: center;
+
+      .click-here {
+        font-weight: bolder;
+      }
     }
   }
 

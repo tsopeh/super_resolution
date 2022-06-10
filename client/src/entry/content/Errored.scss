@@ -1,0 +1,16 @@
+@use "../../utils";
+
+.errored {
+  @include utils.horizontal();
+  justify-content: center;
+  align-items: center;
+  background-color: #faebd7;
+  color: #a84b1e;
+
+  .icon {
+    color: #a10000;
+    font-size: 2rem;
+  }
+}
+
+

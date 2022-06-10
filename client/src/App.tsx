@@ -1,12 +1,12 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import './App.scss'
-import { ContentType, Entry, EntryModel } from './Entry'
-import './Entry.scss'
-import { getPersistedResourceInfo, persistResourceInfo } from './persistent-info'
+import { NNModels, UpsampleOptionsModel } from './entry/content/UpsampleOptions'
+import { ContentType, Entry, EntryModel } from './entry/Entry'
+import './entry/Entry.scss'
+import { getPersistedResourceInfo, persistResourceInfo } from './entry/persistent-info'
+import { checkStatus, ResourceStatusOutput, resourceStatusOutputToEntryModel } from './entry/status'
 import { SelectFile } from './SelectFile'
-import { checkStatus, ResourceStatusOutput, resourceStatusOutputToEntryModel } from './status'
-import { NNModels, UpsampleOptionsModel } from './UpsampleOptions'
 
 const UPLOAD_URL = 'http://localhost:5100/upload'
 
@@ -44,7 +44,7 @@ const App = () => {
               ...toAdd.map((newOne): EntryModel => {
                 return resourceStatusOutputToEntryModel({
                   resourceId: newOne.resourceId,
-                  fileName: persisted.find(p => p.resourceId == newOne.resourceId)!.fileName,
+                  fileName: persisted.find(p => p.resourceId === newOne.resourceId)!.fileName,
                   content: {
                     type: ContentType.Uploading,
                     progress: 0,
@@ -67,7 +67,7 @@ const App = () => {
 
   return (
     <div className="App">
-      <div>Upsample videos</div>
+      <h1>Upsample videos</h1>
       <SelectFile onFileSelected={(files) => {
         setTmpEntries((prevState) => {
           const newEntries: ReadonlyArray<EntryModel> =
@@ -104,14 +104,20 @@ const App = () => {
         })
       }}></SelectFile>
       {
-        [
-          ...persistedEntries.map(({resourceId, content, fileName}) => {
-            return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
-          }),
-          ...tmpEntries.map(({resourceId, content, fileName}) => {
-            return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
-          }),
-        ]
+        persistedEntries.length + tmpEntries.length > 0
+          ? <div className="entries">
+            {
+              [
+                ...persistedEntries.map(({resourceId, content, fileName}) => {
+                  return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
+                }),
+                ...tmpEntries.map(({resourceId, content, fileName}) => {
+                  return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
+                }),
+              ]
+            }
+          </div>
+          : null
       }
     </div>
   )
@@ -133,6 +139,7 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
           content: {
             type: ContentType.Uploading,
             progress: 0,
+            text: `Uploaded: 0%`,
           },
         }
     })
@@ -150,6 +157,7 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
                 content: {
                   ...entry.content,
                   progress: loaded / total,
+                  text: `Uploaded: ${(loaded / total).toFixed(1)}%`,
                 },
               }
           })
@@ -159,23 +167,25 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
     .then((res) => {
       const resourceId = res.data
       setTmpEntries((prevState) => {
-        return prevState.map(entry => {
-          return entry.resourceId !== file.name
-            ? entry
+        return prevState.filter(existing => existing.resourceId !== file.name)
+      })
+      persistResourceInfo([...getPersistedResourceInfo(), {resourceId, fileName: file.name}])
+    })
+    .catch((err) => {
+      setTmpEntries((prevState) => {
+        return prevState.map(existing => {
+          return existing.resourceId !== file.name
+            ? existing
             : {
-              ...entry,
-              resourceId: resourceId,
+              ...existing,
               content: {
-                ...entry.content,
-                progress: 1,
-                text: 'Upload completed.',
+                type: ContentType.Errored,
+                message: 'Upload failed.',
               },
             }
         })
       })
-      persistResourceInfo([...getPersistedResourceInfo(), {resourceId, fileName: file.name}])
     })
-    .catch((err) => console.error('File Upload Error', err))
 }
 
 export default App

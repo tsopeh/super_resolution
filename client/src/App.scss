@@ -3,11 +3,25 @@
 .App {
   width: 60rem;
   max-width: 80%;
-  @include utils.vertical();
+  @include utils.vertical(3rem);
   align-items: stretch;
   padding: 3rem;
   background-color: white;
   opacity: 0.9;
   border: 1px solid #cbd5e1;
   border-radius: 0.8rem;
+
+  h1 {
+    align-self: center;
+  }
+
+  .entries {
+    @include utils.vertical(1rem);
+    padding: 0 2rem;
+
+    > * + * {
+      padding-top: 1rem;
+      border-top: 1px solid #cbd5e1;
+    }
+  }
 }
