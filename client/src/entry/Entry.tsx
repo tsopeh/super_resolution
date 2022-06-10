@@ -25,14 +25,16 @@ export interface EntryModel {
   resourceId: string
   fileName: string
   content: ContentModel
-  onRemove?: () => void
+  onRemove: () => void
 }
 
 export const Entry: React.FC<Omit<EntryModel, 'resourceId'>> = (props) => {
   return <div className="entry">
     <div className="file-name"><span>{props.fileName}</span></div>
     {renderEntryContent(props.content)}
-    <BsFillTrashFill className="remove"></BsFillTrashFill>
+    <BsFillTrashFill className="remove" onClick={() => {
+      props.onRemove?.()
+    }}></BsFillTrashFill>
   </div>
 }
 

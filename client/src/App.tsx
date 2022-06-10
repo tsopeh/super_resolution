@@ -8,7 +8,7 @@ import { getPersistedResourceInfo, persistResourceInfo } from './entry/persisten
 import { checkStatus, ResourceStatusOutput, resourceStatusOutputToEntryModel } from './entry/status'
 import { SelectFile } from './SelectFile'
 
-const UPLOAD_URL = 'http://localhost:5100/upload'
+const getUrl = (path: string) => `http://localhost:5100/${path}`
 
 // TODO: Remove this once the `localStorage` handling gets stable.
 // localStorage.clear()
@@ -18,6 +18,8 @@ const App = () => {
   const [tmpEntries, setTmpEntries] = useState<ReadonlyArray<EntryModel>>([])
   const [persistedEntries, setPersistedEntries] = useState<ReadonlyArray<EntryModel>>([])
 
+  // TODO: Do not wait for two seconds and then fire a request;
+  //  Instead, create a throttle that can be hurried.
   useEffect(() => {
     const intervalId = setInterval(() => {
       const persisted = getPersistedResourceInfo()
@@ -50,7 +52,12 @@ const App = () => {
                     progress: 0,
                   },
                   onRemove: () => {
-                  }, // TODO: Fix remove.
+                    removeResource(newOne.resourceId)
+                      .then(() => {
+                        // TODO: Invalidate cache?
+                        console.log('Removed', newOne.resourceId)
+                      })
+                  },
                 }, newOne)
               }),
             ]
@@ -99,6 +106,11 @@ const App = () => {
                   uploadFileAndStartProcessing(file, setTmpEntries)
                 },
               },
+              onRemove: () => {
+                setTmpEntries((prevState) => {
+                  return prevState.filter(existing => existing.resourceId !== file.name)
+                })
+              },
             }))
           return [...prevState, ...newEntries]
         })
@@ -108,11 +120,11 @@ const App = () => {
           ? <div className="entries">
             {
               [
-                ...persistedEntries.map(({resourceId, content, fileName}) => {
-                  return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
+                ...persistedEntries.map((entry) => {
+                  return <Entry key={entry.resourceId} {...entry}></Entry>
                 }),
-                ...tmpEntries.map(({resourceId, content, fileName}) => {
-                  return <Entry key={resourceId} content={content} fileName={fileName}></Entry>
+                ...tmpEntries.map((entry) => {
+                  return <Entry key={entry.resourceId} {...entry}></Entry>
                 }),
               ]
             }
@@ -146,7 +158,7 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
   })
 
   axios
-    .post<string>(UPLOAD_URL, formData, {
+    .post<string>(getUrl('upload'), formData, {
       onUploadProgress: ({loaded, total}) => {
         setTmpEntries((prevState) => {
           return prevState.map(entry => {
@@ -157,7 +169,7 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
                 content: {
                   ...entry.content,
                   progress: loaded / total,
-                  text: `Uploaded: ${(loaded / total).toFixed(1)}%`,
+                  text: `Uploaded: ${(loaded / total * 100).toFixed(1)}%`,
                 },
               }
           })
@@ -186,6 +198,10 @@ const uploadFileAndStartProcessing = (file: File, setTmpEntries: React.Dispatch<
         })
       })
     })
+}
+
+const removeResource = (resourceId: string): Promise<unknown> => {
+  return axios.delete(getUrl(`resource/${resourceId}`))
 }
 
 export default App

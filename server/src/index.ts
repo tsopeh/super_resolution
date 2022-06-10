@@ -96,6 +96,18 @@ app.route('/finished/:resourceId').get((req, res) => {
   }
 })
 
+app.route('/resource/:resourceId')
+  .delete((req, res) => {
+    const resourceId = req.params.resourceId
+    const status = infoMap.get(resourceId)
+    if (status != null) {
+      infoMap.delete(resourceId)
+      res.send({status: 'success'})
+    } else {
+      res.status(404).send()
+    }
+  })
+
 app.route('/ping').get((req, res) => {
   res.send('pong')
 })

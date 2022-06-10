@@ -3,6 +3,7 @@
 .upsample-options {
 
   @include utils.horizontal(1rem);
+  justify-content: space-between;
 
   .model {
     display: flex;
