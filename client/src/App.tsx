@@ -68,7 +68,7 @@ const App = () => {
         .catch((error) => {
           console.error(error)
         })
-    }, 2000)
+    }, 1000)
     return () => clearInterval(intervalId)
   }, [])
 
