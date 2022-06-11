@@ -99,6 +99,8 @@ app.route('/finished/:resourceId').get((req, res) => {
   const resourceId = req.params.resourceId
   const status = infoMap.get(resourceId)
   if (status != null && status.status.type == ResourceStatus.Finished) {
+    console.log('sending', path.basename(status.status.resultFilePath), status.status.resultFilePath)
+    res.setHeader('Content-Dispositon', `attachment; filename=${path.basename(status.status.resultFilePath)}`)
     res.sendFile(status.status.resultFilePath)
   } else {
     res.status(404).send()

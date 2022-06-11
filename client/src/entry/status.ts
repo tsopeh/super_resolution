@@ -1,6 +1,6 @@
 import axios from 'axios'
 import qs from 'qs'
-import { NNModels } from './content/UpsampleOptions'
+import { modelPronounceableNames, NNModels } from './content/UpsampleOptions'
 import { ContentType, EntryModel } from './Entry'
 
 // Keep in sync with the Server codebase.
@@ -18,8 +18,8 @@ export interface ResourceStatusOutput {
   status:
     | { type: ResourceStatus.Uploading }
     | { type: ResourceStatus.UploadingErrored }
-    | { type: ResourceStatus.Processing, total: number, done: number }
-    | { type: ResourceStatus.ProcessingErrored }
+    | { type: ResourceStatus.Processing, total: number, done: number, model: NNModels, scale: 2 | 3 | 4 }
+    | { type: ResourceStatus.ProcessingErrored, model: NNModels, scale: 2 | 3 | 4 }
     | { type: ResourceStatus.Finished, resultUrl: string, model: NNModels, scale: 2 | 3 | 4 }
 }
 
@@ -55,7 +55,7 @@ export const resourceStatusOutputToEntryModel = (existing: EntryModel, output: R
         content: {
           type: ContentType.Processing,
           progress: output.status.done / output.status.total,
-          text: `${output.status.done} / ${output.status.total}`,
+          text: `Done ${output.status.done}/${output.status.total} frames (${modelPronounceableNames[output.status.model]}, ×${output.status.scale})`,
         },
       }
     case ResourceStatus.ProcessingErrored:

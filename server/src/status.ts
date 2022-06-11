@@ -23,8 +23,8 @@ export interface ResourceStatusOutput {
   status:
     | { type: ResourceStatus.Uploading }
     | { type: ResourceStatus.UploadingErrored }
-    | { type: ResourceStatus.Processing, total: number, done: number }
-    | { type: ResourceStatus.ProcessingErrored }
+    | { type: ResourceStatus.Processing, total: number, done: number, model: NNModels, scale: 2 | 3 | 4 }
+    | { type: ResourceStatus.ProcessingErrored, model: NNModels, scale: 2 | 3 | 4 }
     | { type: ResourceStatus.Finished, resultUrl: string, model: NNModels, scale: 2 | 3 | 4 }
 }
 
@@ -54,20 +54,24 @@ export const getResourceStatusOutput = (resourceId: string): ResourceStatusOutpu
 }
 
 const resourceInfoStatusToResourceStatusOutputStatus = (info: ResourceInfo): ResourceStatusOutput['status'] => {
+
+  const common = {
+    model: info.upsampleOptions.model,
+    scale: info.upsampleOptions.model == NNModels.RealSrAnimeVideoV3
+      ? info.upsampleOptions.scale
+      : 4,
+  }
   switch (info.status.type) {
     case ResourceStatus.Processing:
-      return {type: ResourceStatus.Processing, ...getProgress(info.workDirPath)}
+      return {type: ResourceStatus.Processing, ...getProgress(info.workDirPath), ...common}
     case ResourceStatus.Finished:
       return {
         type: ResourceStatus.Finished,
         resultUrl: `http://localhost:5100/finished/${info.resourceId}`,
-        model: info.upsampleOptions.model,
-        scale: info.upsampleOptions.model == NNModels.RealSrAnimeVideoV3
-          ? info.upsampleOptions.scale
-          : 4,
+        ...common,
       }
     default:
-      return info.status
+      return {...info.status, ...common}
   }
 }
 

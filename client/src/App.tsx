@@ -78,40 +78,43 @@ const App = () => {
       <SelectFile onFileSelected={(files) => {
         setTmpEntries((prevState) => {
           const newEntries: ReadonlyArray<EntryModel> =
-            Array.from(files).map((file) => ({
-              resourceId: file.name,
-              fileName: file.name,
-              content: {
-                type: ContentType.UpsampleOptions,
-                options: {
-                  model: NNModels.RealSrAnimeVideoV3,
-                  scale: 2,
-                },
-                updateForm: (newOptions: UpsampleOptionsModel) => {
-                  setTmpEntries((prevState) => {
-                    return prevState.map(existing => {
-                      return existing.resourceId !== file.name
-                        ? existing
-                        : {
-                          ...existing,
-                          content: {
-                            ...existing.content,
-                            options: newOptions,
-                          },
-                        }
+            Array.from(files).map((file) => {
+              const tmpFileId = `${file.name}_${new Date().getTime()}`
+              return ({
+                resourceId: tmpFileId,
+                fileName: file.name,
+                content: {
+                  type: ContentType.UpsampleOptions,
+                  options: {
+                    model: NNModels.RealSrAnimeVideoV3,
+                    scale: 2,
+                  },
+                  updateForm: (newOptions: UpsampleOptionsModel) => {
+                    setTmpEntries((prevState) => {
+                      return prevState.map(existing => {
+                        return existing.resourceId !== tmpFileId
+                          ? existing
+                          : {
+                            ...existing,
+                            content: {
+                              ...existing.content,
+                              options: newOptions,
+                            },
+                          }
+                      })
                     })
+                  },
+                  submit: (options) => {
+                    uploadFileAndStartProcessing(tmpFileId, file, options, setTmpEntries)
+                  },
+                },
+                onRemove: () => {
+                  setTmpEntries((prevState) => {
+                    return prevState.filter(existing => existing.resourceId !== tmpFileId)
                   })
                 },
-                submit: (options) => {
-                  uploadFileAndStartProcessing(file, options, setTmpEntries)
-                },
-              },
-              onRemove: () => {
-                setTmpEntries((prevState) => {
-                  return prevState.filter(existing => existing.resourceId !== file.name)
-                })
-              },
-            }))
+              })
+            })
           return [...prevState, ...newEntries]
         })
       }}></SelectFile>
@@ -136,6 +139,7 @@ const App = () => {
 }
 
 const uploadFileAndStartProcessing = (
+  tmpFileId: string,
   file: File,
   options: UpsampleOptionsModel,
   setTmpEntries: React.Dispatch<React.SetStateAction<readonly EntryModel[]>>,
@@ -152,7 +156,7 @@ const uploadFileAndStartProcessing = (
 
   setTmpEntries((prevState) => {
     return prevState.map(existing => {
-      return existing.resourceId !== file.name
+      return existing.resourceId !== tmpFileId
         ? existing
         : {
           ...existing,
@@ -171,7 +175,7 @@ const uploadFileAndStartProcessing = (
       onUploadProgress: ({loaded, total}) => {
         setTmpEntries((prevState) => {
           return prevState.map(entry => {
-            return entry.resourceId !== file.name
+            return entry.resourceId !== tmpFileId
               ? entry
               : {
                 ...entry,
@@ -188,14 +192,14 @@ const uploadFileAndStartProcessing = (
     .then((res) => {
       const resourceId = res.data
       setTmpEntries((prevState) => {
-        return prevState.filter(existing => existing.resourceId !== file.name)
+        return prevState.filter(existing => existing.resourceId !== tmpFileId)
       })
       persistResourceInfo([...getPersistedResourceInfo(), {resourceId, fileName: file.name}])
     })
     .catch((err) => {
       setTmpEntries((prevState) => {
         return prevState.map(existing => {
-          return existing.resourceId !== file.name
+          return existing.resourceId !== tmpFileId
             ? existing
             : {
               ...existing,

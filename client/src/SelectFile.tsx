@@ -42,6 +42,7 @@ export const SelectFile: React.FC<UploadFileProps> = (props: UploadFileProps) =>
         e.stopPropagation()
         setDragActive(false)
         handleFileChange(e.dataTransfer.files)
+        e.dataTransfer.clearData()
       }}
     >
       <span className="drag-drop">Drop videos or images here
@@ -56,6 +57,7 @@ export const SelectFile: React.FC<UploadFileProps> = (props: UploadFileProps) =>
           event.preventDefault()
           if (event.target.files != null) {
             handleFileChange(event.target.files)
+            event.target.files = new DataTransfer().files
           }
         }}
       />
