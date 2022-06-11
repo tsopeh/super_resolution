@@ -11,7 +11,7 @@ import { getResourceStatusOutput, infoMap, ResourceStatus, ResourceStatusOutput 
 // region Express setup
 const app = express()
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded())
+app.use(bodyParser.urlencoded({extended: true}))
 app.use(cors())
 app.use(connectBusboy({
   highWaterMark: 2 * 1024 * 1024, // Set 2MiB buffer

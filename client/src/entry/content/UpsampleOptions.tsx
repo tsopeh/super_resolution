@@ -4,7 +4,6 @@ import './UpsampleOptions.scss'
 // Keep in sync with Server.
 export enum NNModels {
   RealSrAnimeVideoV3 = 'realesr-animevideov3',
-  RealSrNetX4Plus = 'realesrnet-x4plus',
   RealSrGanX4Plus = 'realesrgan-x4plus',
   RealSrGanX4PlusAnime = 'realesrgan-x4plus-anime',
 }
@@ -12,15 +11,13 @@ export enum NNModels {
 // Keep in sync with Server.
 export type UpsampleOptionsModel =
   | { model: NNModels.RealSrAnimeVideoV3, scale: 2 | 3 | 4 }
-  | { model: NNModels.RealSrNetX4Plus }
   | { model: NNModels.RealSrGanX4Plus }
   | { model: NNModels.RealSrGanX4PlusAnime }
 
-const allModels = [NNModels.RealSrAnimeVideoV3, NNModels.RealSrNetX4Plus, NNModels.RealSrGanX4Plus, NNModels.RealSrGanX4PlusAnime]
+const allModels = [NNModels.RealSrAnimeVideoV3, NNModels.RealSrGanX4Plus, NNModels.RealSrGanX4PlusAnime]
 
-const modelPronounceableNames = {
+export const modelPronounceableNames = {
   [NNModels.RealSrAnimeVideoV3]: 'realesr-animevideov3',
-  [NNModels.RealSrNetX4Plus]: 'realesrnet-x4plus',
   [NNModels.RealSrGanX4Plus]: 'realesrgan-x4plus',
   [NNModels.RealSrGanX4PlusAnime]: 'realesrgan-x4plus-anime',
 }
@@ -91,8 +88,6 @@ const getDefaultOptionsForModel = (model: unknown): UpsampleOptionsModel => {
   switch (model) {
     case NNModels.RealSrAnimeVideoV3:
       return {model: NNModels.RealSrAnimeVideoV3, scale: 2}
-    case NNModels.RealSrNetX4Plus:
-      return {model: NNModels.RealSrNetX4Plus}
     case NNModels.RealSrGanX4Plus:
       return {model: NNModels.RealSrGanX4Plus}
     case NNModels.RealSrGanX4PlusAnime:

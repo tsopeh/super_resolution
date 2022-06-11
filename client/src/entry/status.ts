@@ -1,5 +1,6 @@
 import axios from 'axios'
 import qs from 'qs'
+import { NNModels } from './content/UpsampleOptions'
 import { ContentType, EntryModel } from './Entry'
 
 // Keep in sync with the Server codebase.
@@ -19,7 +20,7 @@ export interface ResourceStatusOutput {
     | { type: ResourceStatus.UploadingErrored }
     | { type: ResourceStatus.Processing, total: number, done: number }
     | { type: ResourceStatus.ProcessingErrored }
-    | { type: ResourceStatus.Finished, resultUrl: string }
+    | { type: ResourceStatus.Finished, resultUrl: string, model: NNModels, scale: 2 | 3 | 4 }
 }
 
 export const checkStatus = async (resourceIds: ReadonlyArray<string>) => {
@@ -71,6 +72,8 @@ export const resourceStatusOutputToEntryModel = (existing: EntryModel, output: R
         content: {
           type: ContentType.Results,
           url: output.status.resultUrl,
+          model: output.status.model,
+          scale: output.status.scale,
         },
       }
   }

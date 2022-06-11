@@ -74,7 +74,7 @@ const App = () => {
 
   return (
     <div className="App">
-      <h1>Upsample videos</h1>
+      <h1>Upsample videos or images</h1>
       <SelectFile onFileSelected={(files) => {
         setTmpEntries((prevState) => {
           const newEntries: ReadonlyArray<EntryModel> =

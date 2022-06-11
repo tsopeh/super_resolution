@@ -4,7 +4,6 @@ import { ResourceInfo } from './status'
 // Keep in sync with Server.
 export enum NNModels {
   RealSrAnimeVideoV3 = 'realesr-animevideov3',
-  RealSrNetX4Plus = 'realesrnet-x4plus',
   RealSrGanX4Plus = 'realesrgan-x4plus',
   RealSrGanX4PlusAnime = 'realesrgan-x4plus-anime',
 }
@@ -12,7 +11,6 @@ export enum NNModels {
 // Keep in sync with Server.
 export type UpsampleOptionsModel =
   | { model: NNModels.RealSrAnimeVideoV3, scale: 2 | 3 | 4 }
-  | { model: NNModels.RealSrNetX4Plus, scale: 4 }
   | { model: NNModels.RealSrGanX4Plus, scale: 4 }
   | { model: NNModels.RealSrGanX4PlusAnime, scale: 4 }
 
@@ -25,8 +23,6 @@ export const parseUpsampleOptions = (raw: unknown): UpsampleOptionsModel => {
         const parsedScale = parseInt(raw['scale'])
         const scale = isNaN(parsedScale) ? 2 : parsedScale as 2 | 3 | 4
         return {model: NNModels.RealSrAnimeVideoV3, scale}
-      case NNModels.RealSrNetX4Plus:
-        return {model: NNModels.RealSrNetX4Plus, scale: 4}
       case NNModels.RealSrGanX4Plus:
         return {model: NNModels.RealSrGanX4Plus, scale: 4}
       case NNModels.RealSrGanX4PlusAnime:

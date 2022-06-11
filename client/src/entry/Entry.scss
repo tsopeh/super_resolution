@@ -42,11 +42,16 @@
     height: 3rem;
     background-color: rgb(255, 0, 0, 0.2);
     cursor: pointer;
-    transition: background-color 200ms ease-in, color 200ms ease-in;
+    transition: background-color 150ms ease-in, color 100ms ease-in;
 
     &:hover {
       color: #ffffff;
-      background-color: rgb(255, 0, 0, 1);
+      background-color: rgb(227, 84, 84);
+    }
+
+    &:active {
+      color: #ffffff;
+      background-color: rgb(194, 42, 42);
     }
   }
 
