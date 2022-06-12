@@ -39,7 +39,7 @@ app.route('/upload').post((req, res) => {
     const upsampleOptions = parseUpsampleOptions(req.query)
 
     const fileName = info.filename
-    const resourceId = `${fileName}_${upsampleOptions.model}_x${upsampleOptions.scale}_${md5(fileName)}`
+    const resourceId = `${upsampleOptions.model}_x${upsampleOptions.scale}_${md5(fileName)}_${fileName}`
     const workDirPath = path.join(uploadPath, resourceId)
     const srcDirPath = path.join(workDirPath, 'src')
     fs.mkdirSync(srcDirPath, {recursive: true})

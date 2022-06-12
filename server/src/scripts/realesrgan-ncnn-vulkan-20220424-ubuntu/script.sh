@@ -33,7 +33,7 @@ if [[ ($extension == "mp4") || $extension == "mov" ]]; then
 
 elif [[ ($extension == "jpg") || $extension == "png" ]]; then
 
-  result_file_path="$result_path/$filename_without_extension.png"
+  result_file_path="$result_path/$filename_without_extension.$extension"
   ./src/scripts/realesrgan-ncnn-vulkan-20220424-ubuntu/realesrgan-ncnn-vulkan -i "$src_file_path" -o "$result_file_path" -n "$model_name" -s 4 2>"$result_path/all_output.txt"
   echo "$result_file_path"
 

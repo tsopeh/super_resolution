@@ -71,6 +71,7 @@ export const resourceStatusOutputToEntryModel = (existing: EntryModel, output: R
         ...existing,
         content: {
           type: ContentType.Results,
+          fileName: output.resourceId,
           url: output.status.resultUrl,
           model: output.status.model,
           scale: output.status.scale,
