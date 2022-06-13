@@ -11,6 +11,7 @@ Both of these subprojects are written in [Typescript](https://www.typescriptlang
 
 In order to contribute to this project make sure that you have installed:
 
+* Unix based operating system with `bash` installed.
 * [NodeJS](https://nodejs.org/) (and [NPM](https://www.npmjs.com/)) — We strongly recommend installing _NodeJS_ (and _NPM_) via [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm#installing-and-updating);
 * [Yarn](https://yarnpkg.com/) — _Yarn_ can be installed globally via `npm i -g yarn`;
 * [Python](https://www.python.org/) 3.9 or higher;
