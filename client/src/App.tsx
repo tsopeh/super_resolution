@@ -1,20 +1,27 @@
 import axios from 'axios'
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import './App.scss'
-import { NNModels, UpsampleOptionsModel } from './entry/content/UpsampleOptions'
-import { ContentType, Entry, EntryModel } from './entry/Entry'
+import {NNModels, UpsampleOptionsModel} from './entry/content/UpsampleOptions'
+import {ContentType, Entry, EntryModel} from './entry/Entry'
 import './entry/Entry.scss'
-import { getPersistedResourceInfo, persistResourceInfo } from './entry/persistent-info'
-import { checkStatus, ResourceStatusOutput, resourceStatusOutputToEntryModel } from './entry/status'
-import { SelectFile } from './SelectFile'
+import {getPersistedResourceInfo, persistResourceInfo} from './entry/persistent-info'
+import {checkStatus, ResourceStatusOutput, resourceStatusOutputToEntryModel} from './entry/status'
+import {SelectFile} from './SelectFile'
 
 const getUrl = (path: string) => `http://localhost:5100/${path}`
 
 // TODO: Remove this once the `localStorage` handling gets stable.
 // localStorage.clear()
 
+enum ServerStatus {
+  Unimportant = 'unimportant',
+  Online = 'online',
+  Offline = 'offline',
+}
+
 const App = () => {
 
+  const [serverStatus, setServerStatus] = useState<ServerStatus>(ServerStatus.Unimportant)
   const [tmpEntries, setTmpEntries] = useState<ReadonlyArray<EntryModel>>([])
   const [persistedEntries, setPersistedEntries] = useState<ReadonlyArray<EntryModel>>([])
 
@@ -28,6 +35,7 @@ const App = () => {
       }
       checkStatus(persisted.map(info => info.resourceId))
         .then((result) => {
+          setServerStatus(ServerStatus.Online)
           setPersistedEntries(prevState => {
             const toUpdate = result.filter(res => res != null && prevState.some(existing => existing.resourceId === res?.resourceId)) as ReadonlyArray<ResourceStatusOutput>
             const toAdd = result.filter(res => res != null && !prevState.some(existing => existing.resourceId === res?.resourceId)) as ReadonlyArray<ResourceStatusOutput>
@@ -61,11 +69,15 @@ const App = () => {
                 }, newOne)
               }),
             ]
-            persistResourceInfo(nextState.map(entry => ({resourceId: entry.resourceId, fileName: entry.fileName})))
+            persistResourceInfo(nextState.map(entry => ({
+              resourceId: entry.resourceId,
+              fileName: entry.fileName,
+            })))
             return nextState
           })
         })
         .catch((error) => {
+          setServerStatus(ServerStatus.Offline)
           console.error(error)
         })
     }, 1000)
@@ -75,6 +87,14 @@ const App = () => {
   return (
     <div className="App">
       <h1>Upsample videos or images</h1>
+      {
+        serverStatus === ServerStatus.Unimportant
+          ? null
+          : <div
+            className={`server-status ${serverStatus === ServerStatus.Online ? 'online' : 'offline'}`}
+            title={`Server status: ${serverStatus === ServerStatus.Online ? 'Online' : 'Offline'}`}
+          />
+      }
       <SelectFile onFileSelected={(files) => {
         setTmpEntries((prevState) => {
           const newEntries: ReadonlyArray<EntryModel> =
@@ -117,7 +137,7 @@ const App = () => {
             })
           return [...prevState, ...newEntries]
         })
-      }}></SelectFile>
+      }}/>
       {
         persistedEntries.length + tmpEntries.length > 0
           ? <div className="entries">

@@ -3,6 +3,7 @@
 .App {
   width: 60rem;
   max-width: 80%;
+  position: relative;
   @include utils.vertical(3rem);
   align-items: stretch;
   padding: 3rem;
@@ -12,6 +13,24 @@
 
   h1 {
     align-self: center;
+  }
+
+  .server-status {
+    position: absolute;
+    width: 1.5rem;
+    height: 1.5rem;
+    top: 1.5rem;
+    right: 1.5rem;
+    border-radius: 50%;
+    margin-top: 0;
+
+    &.online {
+      background-color: #66f966;
+    }
+
+    &.offline {
+      background-color: #dc143c;
+    }
   }
 
   .entries {
